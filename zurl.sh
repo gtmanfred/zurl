@@ -44,8 +44,10 @@ pastebin() {
             if [[ "${1##*/}" == "PKGBUILD" ]];then
                 url="$1" 
             else
-                url=${(Mf)$( curl $1):#*PKGBUILD*}
-                url=https://aur.archlinux.org/"${${url##*=\'}%\'*}"
+                if [[ $AUR != "comments" ]];then 
+                    url=${(Mf)$( curl $1):#*PKGBUILD*}
+                    url=https://aur.archlinux.org/"${${url##*=\'}%\'*}"
+                fi
             fi
             ;;
         www.archlinux.org)
@@ -83,7 +85,7 @@ vr(){
         tmux selectw -t pastie
     fi
 }
-
+[[ -f ~/.zurlrc ]] && export AUR=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) || export AUR="PKGBUILD"
 filetype2="$(curl -I $1 2>& /dev/null |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetypeis=${filetype2%/*}
 case $filetypeis in 
