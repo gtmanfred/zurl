@@ -75,13 +75,13 @@ pastebin() {
 }
 vr(){
     if [[ -z ${(Mf)$(vim --serverlist)#$1} ]];then
-        if (( $+commands[tmux] )) && [[ -n $TMUX ]];then
-            tmux neww -n pastie "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":r !curl -s $2 2>&/dev/null\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'"
+        if (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session)##*attached} ]];then
+            tmux neww -n pastie "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":silent :r !curl -s $2 2>&/dev/null\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'"
         else
-            urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':r !curl -s $2 2>&/dev/null' --servername $1 /tmp/${2##*[^0-9A-Za-z]}"
+            urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':silent :r !curl -s $2 2>&/dev/null' --servername $1 /tmp/${2##*[^0-9A-Za-z]}"
         fi
     else
-        vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec \":r !curl -s $2 2 >& /dev/null\"" /tmp/${2##*[^0-9A-Za-z]}
+        vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec \":silent :r !curl -s $2 2 >& /dev/null\"" /tmp/${2##*[^0-9A-Za-z]}
         tmux selectw -t pastie
     fi
 }
