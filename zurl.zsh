@@ -44,8 +44,8 @@ pastebin() {
             if [[ "${1##*/}" == "PKGBUILD" ]];then
                 url="$1" 
             else
-                if [[ $AUR != "comments" ]];then 
-                    url=${(Mf)$( curl $1):#*PKGBUILD*}
+                if [[ $AURLINKS != "comments" ]];then 
+                    url=${(Mf)$( curl $1 2>&/dev/null):#*PKGBUILD*}
                     url=https://aur.archlinux.org/"${${url##*=\'}%\'*}"
                 fi
             fi
@@ -61,14 +61,14 @@ pastebin() {
             url=$1
             ;;
         imgur.com)
-            imageurl=$(curl $1 |grep -Ei ".jpg|png"|head -n1)
+            imageurl=$(curl $1 2>&/dev/null |grep -Ei ".jpg|png"|head -n1)
             imageurl=${${imageurl#*href=\"}%%\"*}
             ;;
     esac
     if [[ -n $url ]];then
         vr PASTIE $url
     elif [[ -n $imageurl ]];then
-        feh $imageurl
+        (( $+commands[feh] )) && feh $imageurl || xdg-open $imageurl
     else
         xdg-open "$1"
     fi
@@ -76,23 +76,25 @@ pastebin() {
 vr(){
     if [[ -z ${(Mf)$(vim --serverlist)#$1} ]];then
         if (( $+commands[tmux] )) && [[ -n $TMUX ]];then
-            tmux neww -n pastie "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":r !curl -s $2\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'"
+            tmux neww -n pastie "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":r !curl -s $2 2>&/dev/null\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'"
         else
-            urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':r !curl -s $2' --servername $1 /tmp/${2##*[^0-9A-Za-z]}"
+            urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':r !curl -s $2 2>&/dev/null' --servername $1 /tmp/${2##*[^0-9A-Za-z]}"
         fi
     else
-        vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec \":r !curl -s $2\"" /tmp/${2##*[^0-9A-Za-z]}
+        vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec \":r !curl -s $2 2 >& /dev/null\"" /tmp/${2##*[^0-9A-Za-z]}
         tmux selectw -t pastie
     fi
 }
-[[ -f ~/.zurlrc ]] && export AUR=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) || export AUR="PKGBUILD"
+[[ -f ~/.zurlrc ]] && export ZURLCONFIG=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) 
+[[ -z ZURLCONFIG ]] && export ZURLCONFIG="PKGBUILD"
+export AURLINKS=${AURLINKS:-$ZURLCONFIG}
 filetype2="$(curl -I $1 2>& /dev/null |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetypeis=${filetype2%/*}
 case $filetypeis in 
     image)
         case ${filetype2#*/} in
             gif*)
-                curl $1 > /tmp/${1##*/}
+                curl $1 > /tmp/${1##*/} 2 >& /dev/null
                 mplayer -loop 0 -speed 1.3 /tmp/${1##*/}
                 rm /tmp/${1##*/}
                     ;;
