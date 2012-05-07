@@ -73,10 +73,10 @@ pastebin() {
 }
 vr(){
     if [[ -z ${(Mf)$(vim --serverlist)#$1} ]];then
-        if (( $+commands[tmux] )) && [[ -n ${(f)$(tmux list-sessions)} ]];then
+        if (( $+commands[tmux] )) && [[ -n $TMUX ]];then
             tmux neww -n pastie "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":r !curl -s $2\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'"
         else
-            $TERM -e zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":r !curl -s $2\" --servername $1 /tmp/${2##*[^0-9A-Za-z]}'
+            urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':r !curl -s $2' --servername $1 /tmp/${2##*[^0-9A-Za-z]}"
         fi
     else
         vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec \":r !curl -s $2\"" /tmp/${2##*[^0-9A-Za-z]}
