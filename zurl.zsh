@@ -92,6 +92,7 @@ vr(){
 [[ -f ~/.zurlrc ]] && export ZURLCONFIG=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) 
 [[ -z ZURLCONFIG ]] && export ZURLCONFIG="PKGBUILD"
 export AURLINKS=${AURLINKS:-$ZURLCONFIG}
+export SPEED=${SPEED:-1}
 filetype2="$(curl -I $1 2>& /dev/null |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2=${filetype2%%;*}
 filetypeis=${filetype2%/*}
@@ -100,7 +101,7 @@ case $filetypeis in
         case ${filetype2#*/} in
             gif*)
                 curl $1 > /tmp/${1##*/} 2 >& /dev/null
-                mplayer -loop 0 -speed 1.3 /tmp/${1##*/}
+                mplayer -loop 0 -speed $SPEED /tmp/${1##*/}
                 rm /tmp/${1##*/}
                     ;;
             *)
