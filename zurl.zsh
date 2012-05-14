@@ -26,7 +26,12 @@ pastebin() {
             url="${1%/*}/pastebin.php\?dl\=${1##*/}"
             ;;
         pastie.org)
-            url="${1%/*}/pastes/${1##*/}/download"
+            #url="${1%/*}/pastes/${1##*/}/download"
+            if [[ ${${1##*org/}%%/*} == "pastes" ]];then
+                url="$1/download"
+            else
+                url=${${${${${${(Mf)$(curl $1 |grep raw )}#*\"}%%\"*}//text/download}//\?/\\\?}//=/\\=}
+            fi
             ;;
         bpaste.net)
             url="${1%/sh*}/raw/${1#*ow/}"
@@ -79,14 +84,14 @@ vr(){
         val=$RANDOM
     done
     if [[ -z ${(Mf)$(vim --serverlist)#$1} ]];then
-        if (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session &> /dev/null)##*attached} ]];then
+        if (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session 2>&/dev/null)##*attached} ]];then
             tmux neww -n $1 "zsh -c 'vim \"+noremap q <esc>:q!<cr>\"  -c \":silent :r !curl -s $2 \" --servername $1 /tmp/$val'"
         else
             urxvtc -e zsh -c "vim '+noremap q <esc>:q!<cr>'  -c ':silent :r !curl -s $2 2>&/dev/null' --servername $1 /tmp/$val"
         fi
     else
         vim "+noremap q <esc>:q!<cr>" --servername $1  --remote-tab-silent  "+exec ':silent :r !curl -s $2'" /tmp/$val
-        (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session &> /dev/null)##*attached} ]] && tmux selectw -t pastie
+        (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session 2>&/dev/null)##*attached} ]] && tmux selectw -t pastie
     fi
 }
 [[ -f ~/.zurlrc ]] && export ZURLCONFIG=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) 
