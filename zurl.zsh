@@ -19,6 +19,12 @@ pastebin() {
         dpaste.com)
             url="$1/plain/"
             ;;
+        pastebin.ca)
+            url=http://pastebin.ca${${${(f)$(curl $1 |grep raw)}#*href=\"}%%\"*}
+            ;;
+        paste.dy.fi)
+            url="${1%%\?*}/plain"
+            ;;
         pastebin.ca|www.pastebin.ca)
             url="${1%/*}/raw/${1##*/}"
             ;;
