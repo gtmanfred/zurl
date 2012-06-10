@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 pastebin() {
+    echo "${${1##*//}%%/*}"
     case "${${1##*//}%%/*}" in
         sprunge.us)
             url="${1%\?*}"
@@ -75,13 +76,18 @@ pastebin() {
             imageurl=$(curl $1 2>&/dev/null |grep -Ei ".jpg|png"|head -n1)
             imageurl=${${imageurl#*href=\"}%%\"*}
             ;;
+        www.youtube.com|youtu.be)
+            videourl=$1;;
+
     esac
     if [[ -n $url ]];then
         vr PASTIE $url
     elif [[ -n $imageurl ]];then
-        (( $+commands[feh] )) && feh $imageurl || xdg-open $imageurl
+        (( $+commands[feh] )) && feh $imageurl || $BROWSER $imageurl
+    elif [[ -n $videourl ]];then
+         (( $+commands[youtube-viewer] )) && youtube-viewer $1 || $BROWSER "$1"
     else
-        xdg-open "$1"
+        $BROWSER "$1"
     fi
 }
 vr(){
