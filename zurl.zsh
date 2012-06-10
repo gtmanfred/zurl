@@ -110,6 +110,7 @@ vr(){
 [[ -z ZURLCONFIG ]] && export ZURLCONFIG="PKGBUILD"
 export AURLINKS=${AURLINKS:-$ZURLCONFIG}
 export SPEED=${SPEED:-1}
+export BROWSER=${BROWSER:-firefox}
 filetype2="$(curl -I $1 2>& /dev/null |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2=${filetype2%%;*}
 filetypeis=${filetype2%/*}
