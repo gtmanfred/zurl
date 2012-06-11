@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
 pastebin() {
-    echo "${${1##*//}%%/*}"
     case "${${1##*//}%%/*}" in
         sprunge.us)
             url="${1%\?*}"
@@ -85,7 +84,7 @@ pastebin() {
     elif [[ -n $imageurl ]];then
         (( $+commands[feh] )) && feh $imageurl || $BROWSER $imageurl
     elif [[ -n $videourl ]];then
-         (( $+commands[youtube-viewer] )) && youtube-viewer $1 || $BROWSER "$1"
+         (( $+commands[youtube-viewer] )) && youtube-viewer -mplayer=$YOUTUBEPLAYER -mplayer_arguments=$YOUTUBEARGS $1 || $BROWSER "$1"
     else
         $BROWSER "$1"
     fi
@@ -106,11 +105,14 @@ vr(){
         (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session 2>&/dev/null)##*attached} ]] && tmux selectw -t pastie
     fi
 }
-[[ -f ~/.zurlrc ]] && export ZURLCONFIG=$(awk '/auropens/ {print $2}' $HOME/.zurlrc) 
-[[ -z ZURLCONFIG ]] && export ZURLCONFIG="PKGBUILD"
-export AURLINKS=${AURLINKS:-$ZURLCONFIG}
+[[ -f ~/.zurlrc ]] && . ~/.zurlrc
+export AURLINKS=${AURLINKS:-PKGBUILD}
 export SPEED=${SPEED:-1}
 export BROWSER=${BROWSER:-firefox}
+export GIFPLAYER=${GIFPLAYER:-mplayer}
+export YOUTUBEPLAYER=${YOUTUBEPLAYER:-mplayer}
+[[ -z $GIFARGS ]] && export GIFARGS="-loop 0 -speed 1"
+[[ -z $YOUTUBEARGS ]] && export YOUTUBEARGS="-loop 0 -speed 1"
 filetype2="$(curl -I $1 2>& /dev/null |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2=${filetype2%%;*}
 filetypeis=${filetype2%/*}
@@ -118,9 +120,10 @@ case $filetypeis in
     image)
         case ${filetype2#*/} in
             gif*)
-                curl $1 > /tmp/${1##*/} 2 >& /dev/null
-                mplayer -loop 0 -speed $SPEED /tmp/${1##*/}
-                rm /tmp/${1##*/}
+                file=/tmp/${${1##*/}%\.}
+                curl -s $1 -o $file
+                $GIFPLAYER ${=GIFARGS[@]} $file
+                rm $file
                     ;;
             *)
                 feh  $1
