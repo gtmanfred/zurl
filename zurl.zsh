@@ -96,10 +96,10 @@ vr(){
         if [[ $? -eq 0 ]]; then
             $MULTIPLEXER ${=MULTIARGS[@]} "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val"
         else
-            $pasteterminal ${=termexec[@]} zsh -c "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val"
+            (( $+commands[pasteterminal] )) && $pasteterminal ${=termexec[@]} zsh -c "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val" || $BROWSER $2
         fi
     else
-        $PASTEEDITOR ${=OPENEDPASTEARGS[@]} ${ZURLDIR%/}/$val
+        (( $+commands[$PASTEDITOR] )) && $PASTEEDITOR ${=OPENEDPASTEARGS[@]} ${ZURLDIR%/}/$val || $BROWSER $2
     fi
 }
 removefile (){
@@ -160,12 +160,14 @@ case $filetypeis in
             gif*)
                 file=/tmp/${${1##*/}%\.}
                 curl -s $1 -o $file
-                $GIFPLAYER ${=GIFARGS[@]} $file
+                (( $+commands[$GIFPLAYER] )) && echo yes || echo no
+                echo $GIFPLAYER
+                (( $+commands[$GIFPLAYER] )) && $GIFPLAYER ${=GIFARGS[@]} $file || $BROWSER $1
                 rm $file
                     ;;
             *)
                 curl -s -o ${ZURLDIR%/}/$val $1
-                $IMAGEOPENER ${ZURLDIR%/}/$val
+                (( $+commands[$IMAGEOPENER] )) && $IMAGEOPENER ${ZURLDIR%/}/$val || $BROWSER $1
                 ;;
         esac
         ;;
@@ -181,7 +183,6 @@ case $filetypeis in
         fi
         ;;
 esac
-
 
 [[ $REMOVEFILE -eq 1 ]] && (removefile &>/dev/null &)
 # vim: set filetype=zsh:
