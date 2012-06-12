@@ -105,9 +105,10 @@ vr(){
         (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session 2>&/dev/null)##*attached} ]] && tmux selectw -t pastie
     fi
 }
+[[ -f /etc/zurlrc ]] && . /etc/zurlrc
 [[ -f ~/.zurlrc ]] && . ~/.zurlrc
+[[ -f $XDG_CONFIG_HOME/zurl/config ]] && . $XDG_CONFIG_HOME/zurl/config
 export AURLINKS=${AURLINKS:-PKGBUILD}
-export SPEED=${SPEED:-1}
 export BROWSER=${BROWSER:-firefox}
 export GIFPLAYER=${GIFPLAYER:-mplayer}
 export YOUTUBEPLAYER=${YOUTUBEPLAYER:-mplayer}

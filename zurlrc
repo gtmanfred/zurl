@@ -1,0 +1,6 @@
+AURLINKS=PKGBUILD
+BROWSER=firefox
+GIFPLAYER=mplayer
+YOUTUBEPLAYER=mplayer
+GIFARGS="-loop 0 -speed 1"
+YOUTUBEARGS="-loop 0 -speed 1"
