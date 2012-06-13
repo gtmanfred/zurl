@@ -89,9 +89,9 @@ pastebin() {
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
         curl -s -o "${ZURLDIR%/}"/"$val" "$imageurl"
-        (( "$+commands[$IMAGEOPENER]" )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
+        (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
-         (( "$+commands[youtube-viewer]" )) && youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1" || "$BROWSER" "$1"
+         (( $+commands[youtube-viewer] )) && youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1" || "$BROWSER" "$1"
     elif [[ "$dones" -ne 1 ]]; then
         "$BROWSER" "$1"
     fi
@@ -104,16 +104,17 @@ testomp(){
         text)
             vr PASTIE "$1";;
         image)
+            echo $url
             case "${filetype2#*/}" in
                 gif*)
                     file=/tmp/"${${1##*/}%\.}"
                     curl -s "$1" -o "$file"
-                    (( "$+commands[$GIFPLAYER]" )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
+                    (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
                     curl -s -o "${ZURLDIR%/}"/"$val" "$1"
-                    (( "$+commands[$IMAGEOPENER]" )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                    (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
             ;;
@@ -129,10 +130,10 @@ vr(){
         if [[ "$?" -eq 0 ]]; then
             "$MULTIPLEXER" "${=MULTIARGS[@]}" "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val"
         else
-            (( "$+commands[$pasteterminal]" )) && "$pasteterminal" "${=termexec[@]}" zsh -c "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val" || "$BROWSER" "$2"
+            (( $+commands[$pasteterminal] )) && "$pasteterminal" "${=termexec[@]}" zsh -c "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val" || "$BROWSER" "$2"
         fi
     else
-        (( "$+commands[$PASTEDITOR]" )) && "$PASTEEDITOR" "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$2"
+        (( $+commands[$PASTEDITOR] )) && "$PASTEEDITOR" "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$2"
     fi
 }
 removefile (){
@@ -147,7 +148,7 @@ testopen(){
     fi
 }
 testmulti(){
-    if (( "$+commands[tmux]" )) && [[ -n "${(Mf)$(tmux list-session 2>&/dev/null|grep attached)}" ]];then
+    if (( $+commands[tmux] )) && [[ -n "${(Mf)$(tmux list-session 2>&/dev/null|grep attached)}" ]];then
         return 1
     else
         return 0
@@ -191,12 +192,12 @@ case "$filetypeis" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
                 curl -s "$1" -o "$file"
-                (( "$+commands[$GIFPLAYER]" )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
+                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
                 curl -s -o "${ZURLDIR%/}"/"$val" "$1"
-                (( "$+commands[$IMAGEOPENER]" )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
         ;;
