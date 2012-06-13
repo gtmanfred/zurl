@@ -56,8 +56,9 @@ pastebin() {
                 url="$1" 
             else
                 if [[ "$AURLINKS" != "comments" ]];then 
-                    url="${(Mf)$( curl -s $1 ):#*PKGBUILD*}"
-                    url=https://aur.archlinux.org/"${${url##*=\'}%\'*}"
+                    url="${(f)$( curl -s $1 |grep PKGBUILD)}"
+                    url="${${url##*href\=\'}%%\'*}"
+                    url=https://aur.archlinux.org/"$url" #"${${url##*=\'}%\'*}"
                 fi
             fi
             ;;
