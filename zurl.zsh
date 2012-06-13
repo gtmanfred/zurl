@@ -51,6 +51,9 @@ pastebin() {
         hpaste.org)
             url="${1%/*}"/raw/"${1##*/}"
             ;;
+        paste.xinu.at)
+            url=${1%/}
+            ;;
         aur.archlinux.org)
             if [[ "${1##*/}" == "PKGBUILD" ]];then
                 url="$1" 
