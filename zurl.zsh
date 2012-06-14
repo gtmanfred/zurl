@@ -133,7 +133,7 @@ vr(){
             (( $+commands[$pasteterminal] )) && "$pasteterminal" "${=termexec[@]}" zsh -c "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val" || "$BROWSER" "$2"
         fi
     else
-        (( $+commands[$PASTEDITOR] )) && "$PASTEEDITOR" "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$2"
+        (( $+commands[$PASTEEDITOR] )) && $PASTEEDITOR "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" #|| "$BROWSER" "$2"
     fi
 }
 removefile (){
