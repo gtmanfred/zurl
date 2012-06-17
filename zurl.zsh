@@ -104,7 +104,6 @@ testomp(){
         text)
             vr PASTIE "$1";;
         image)
-            echo $url
             case "${filetype2#*/}" in
                 gif*)
                     file=/tmp/"${${1##*/}%\.}"
@@ -181,35 +180,42 @@ export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
 
 
-
-
-filetype2="$(curl -s -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+tmpurl=$1
+head="$(curl -s -I $tmpurl)"
+if [[ -n "${(f)$(echo $head|grep ^Location)}" ]];then 
+    tmpurl="${(f)$(echo $head|grep ^Location)##* }"
+    if [[ -z "${tmpurl#^http*}" ]];then
+        tmpurl=http://${${1##http:\/\/}%%\/*}$tmpurl
+    fi
+fi
+filetype2="$(curl -s -I $tmpurl |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
+echo $tmpurl
 case "$filetypeis" in 
     image)
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
-                curl -s "$1" -o "$file"
-                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
+                curl -s "$tmpurl" -o "$file"
+                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$tmpurl"
                 rm "$file"
                     ;;
             *)
-                curl -s -o "${ZURLDIR%/}"/"$val" "$1"
-                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                curl -s -o "${ZURLDIR%/}"/"$val" "$tmpurl"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$tmpurl"
                 ;;
         esac
         ;;
     *)
         if [[ "$filetype2" == "text/plain" ]];then
-            url="$1"
-            if [[ "${${1##*//}%%/*}" == "pastebin.com" ]];then
+            url="$tmpurl"
+            if [[ "${${tmpurl##*//}%%/*}" == "pastebin.com" ]];then
                 url="${${url//\?/\\\?}//=/\\=}"
             fi
             vr PASTIE "$url"
         else
-            pastebin "$1"
+            pastebin "$tmpurl"
         fi
         ;;
 esac
