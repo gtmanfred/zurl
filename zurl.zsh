@@ -20,7 +20,7 @@ pastebin() {
             url="$1"/plain/
             ;;
         pastebin.ca)
-            url=http://pastebin.ca"${${${(f)$(curl -s $1 |grep raw)}#*href=\"}%%\"*}"
+            url=http://pastebin.ca"${${${(f)$(curl -Ls $1 |grep raw)}#*href=\"}%%\"*}"
             ;;
         paste.dy.fi)
             url="${1%%\?*}"/plain
@@ -36,7 +36,7 @@ pastebin() {
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"/download
             else
-                url="${${${${${${(Mf)$(curl -s $1 |grep raw )}#*\"}%%\"*}//text/download}//\?/\\\?}//=/\\=}"
+                url="${${${${${${(Mf)$(curl -Ls $1 |grep raw )}#*\"}%%\"*}//text/download}//\?/\\\?}//=/\\=}"
             fi
             ;;
         bpaste.net)
@@ -59,7 +59,7 @@ pastebin() {
                 url="$1" 
             else
                 if [[ "$AURLINKS" != "comments" ]];then 
-                    url="${(f)$( curl -s $1 |grep PKGBUILD)}"
+                    url="${(f)$( curl -Ls $1 |grep PKGBUILD)}"
                     url="${${url##*href\=\'}%%\'*}"
                     url=https://aur.archlinux.org/"$url" #"${${url##*=\'}%\'*}"
                 fi
@@ -79,7 +79,7 @@ pastebin() {
             dones=1;
             ;; 
         imgur.com)
-            imageurl="$(curl -s $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
+            imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
             imageurl="${${imageurl##*ref\=\"}%%\"*}"
             ;;
         www.youtube.com|youtu.be)
@@ -88,7 +88,7 @@ pastebin() {
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
-        curl -s -o "${ZURLDIR%/}"/"$val" "$imageurl"
+        curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl"
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
          (( $+commands[youtube-viewer] )) && youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1" || "$BROWSER" "$1"
@@ -97,7 +97,7 @@ pastebin() {
     fi
 }
 testomp(){
-    filetype2="$(curl -s -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+    filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
     filetype2="${filetype2%%;*}"
     filetypeis="${filetype2%/*}"
     case "$filetypeis" in 
@@ -107,12 +107,12 @@ testomp(){
             case "${filetype2#*/}" in
                 gif*)
                     file=/tmp/"${${1##*/}%\.}"
-                    curl -s "$1" -o "$file"
+                    curl -Ls "$1" -o "$file"
                     (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
-                    curl -s -o "${ZURLDIR%/}"/"$val" "$1"
+                    curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
                     (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
@@ -122,7 +122,7 @@ testomp(){
     esac
 }
 vr(){
-    curl -s -o "${ZURLDIR%/}"/"$val" "$2"
+    curl -Ls -o "${ZURLDIR%/}"/"$val" "$2"
     testopen
     if [[ "$?" -eq 0 ]];then
         testmulti 
@@ -180,42 +180,35 @@ export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
 
 
-tmpurl=$1
-head="$(curl -s -I $tmpurl)"
-if [[ -n "${(f)$(echo $head|grep ^Location)}" ]];then 
-    tmpurl="${(f)$(echo $head|grep ^Location)##* }"
-    if [[ -z "${tmpurl#^http*}" ]];then
-        tmpurl=http://${${1##http:\/\/}%%\/*}$tmpurl
-    fi
-fi
-filetype2="$(curl -s -I $tmpurl |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+head="$(curl -Ls -I $1)"
+filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
-echo $tmpurl
+echo $1
 case "$filetypeis" in 
     image)
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
-                curl -s "$tmpurl" -o "$file"
-                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$tmpurl"
+                curl -Ls "$1" -o "$file"
+                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
-                curl -s -o "${ZURLDIR%/}"/"$val" "$tmpurl"
-                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$tmpurl"
+                curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
         ;;
     *)
         if [[ "$filetype2" == "text/plain" ]];then
-            url="$tmpurl"
-            if [[ "${${tmpurl##*//}%%/*}" == "pastebin.com" ]];then
+            url="$1"
+            if [[ "${${1##*//}%%/*}" == "pastebin.com" ]];then
                 url="${${url//\?/\\\?}//=/\\=}"
             fi
             vr PASTIE "$url"
         else
-            pastebin "$tmpurl"
+            pastebin "$1"
         fi
         ;;
 esac
