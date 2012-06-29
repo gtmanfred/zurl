@@ -154,7 +154,7 @@ testmulti(){
     fi
 }
 
-zmodload regex-replace
+autoload -U regex-replace
 export val="$RANDOM"
 while [[ -f "${ZURLDIR%/}"/"$val" ]];do
     export val="$RANDOM"
