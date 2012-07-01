@@ -1,11 +1,12 @@
 AURLINKS=PKGBUILD
 BROWSER=firefox
 GIFPLAYER=mplayer
+#YOUTUBE=vlc #this will overwrite using youtube-viewer and just give the url straight to the player
 YOUTUBEPLAYER=mplayer
 GIFARGS="-loop 0 -speed 1"
 YOUTUBEARGS="-loop 0 -speed 1"
 REMOVEFILE=1
-ZURLDIR="$HOME/pastes"
+ZURLDIR="/tmp"
 PASTEEDITOR=vim
 PASTEARGS="--servername PASTIE"
 OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"

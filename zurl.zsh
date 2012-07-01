@@ -91,7 +91,13 @@ pastebin() {
         curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl"
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
-         (( $+commands[youtube-viewer] )) && youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1" || "$BROWSER" "$1"
+        if [[ -n "$YOUTUBE" ]]; then
+            "$YOUTUBE" "$1"
+        elif (( $+commands[youtube-viewer] )); then
+            youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1"
+        else
+            "$BROWSER" "$1"
+        fi
     elif [[ "$dones" -ne 1 ]]; then
         "$BROWSER" "$1"
     fi
@@ -179,6 +185,14 @@ export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername PASTIE"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
 [[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
+if [[ ! -d "$ZURLDIR" ]]; then
+    mkdir "$ZURLDIR";
+    if [[ $? -ne 0 ]]; then
+        print "$ZURLDIR does not exist"
+        exit 1;
+    fi
+fi
+
 
 
 head="$(curl -Ls -I $1)"
