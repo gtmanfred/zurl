@@ -114,7 +114,7 @@ testomp(){
                 gif*)
                     file=/tmp/"${${1##*/}%\.}"
                     curl -Ls "$1" -o "$file"
-                    (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${GIFARGS}" "$file" || "$BROWSER" "$1"
+                    (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
@@ -133,12 +133,12 @@ vr(){
     if [[ "$?" -eq 0 ]];then
         testmulti 
         if [[ "$?" -eq 0 ]]; then
-            "$MULTIPLEXER" "${MULTIARGS}" "$PASTEEDITOR ${PASTEARGS} ${ZURLDIR%/}/$val"
+            "$MULTIPLEXER" "${=MULTIARGS[@]}" "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val"
         else
-            (( $+commands[$PASTETERMINAL] )) && "$PASTETERMINAL" "${PASTEEXEC}" "zsh -c \"$PASTEEDITOR ${PASTEARGS} ${ZURLDIR%/}/$val\"" || "$BROWSER" "$2"
+            (( $+commands[$PASTETERMINAL] )) && "$PASTETERMINAL" "${=PASTEEXEC[@]}" "zsh -c \"$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val\"" || "$BROWSER" "$2"
         fi
     else
-        (( $+commands[$PASTEEDITOR] )) && $PASTEEDITOR "${OPENEDPASTEARGS}" "${ZURLDIR%/}"/"$val" #|| "$BROWSER" "$2"
+        (( $+commands[$PASTEEDITOR] )) && $PASTEEDITOR "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" #|| "$BROWSER" "$2"
     fi
 }
 removefile (){
@@ -179,12 +179,12 @@ export ZURLDIR="${ZURLDIR:-/tmp}"
 export REMOVEFILE="${REMOVEFILE:-1}"
 export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
-[[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
-[[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
-[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
-[[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername PASTIE"
-[[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
-[[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
+[[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC=-e
+[[ -z "$GIFARGS" ]] && export GIFARGS=-loop 0 -speed 1
+[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS=-loop 0 -speed 1
+[[ -z "$PASTEARGS" ]] && export PASTEARGS=--servername PASTIE
+[[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS=$PASTEARGS --remote-tab-silent
+[[ -z "$MULTIARGS" ]] && export MULTIARGS=neww -n $SERVERNAME
 if [[ ! -d "$ZURLDIR" ]]; then
     mkdir "$ZURLDIR";
     if [[ $? -ne 0 ]]; then
@@ -206,7 +206,7 @@ case "$filetypeis" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
                 curl -Ls "$1" -o "$file"
-                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${GIFARGS}" "$file" || "$BROWSER" "$1"
+                (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
