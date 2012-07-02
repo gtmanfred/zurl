@@ -1,0 +1,146 @@
+=head1 NAME
+
+zurl - url launcher
+
+=head1 SYNOPSIS
+
+Usage: I<zurl> url
+
+=head1 DESCRIPTION
+
+zurl is a simple tool to configure urls being launched in different ways
+based on to what the url is pointing.  Opening gifs, pictures, youtube
+videos, pastebins and things like these with other programs besides the
+browser is the main goal.
+
+=head1 CONFIG FILES
+
+The zurl config files start with what is in:
+
+    $XDG_CONFIG_HOME/zurl.config
+
+falling back to:
+
+    $HOME/.zurlrc
+
+end last following what is in:
+
+    /etc/zurlrc
+
+if none of these files exist, it uses the defaults which originally were
+in /etc/zurlrc
+
+=head1 CONFIGURATION
+
+All configuration is done with environment variables and functions.
+
+=over 4
+
+=item B<ZURLDIR>
+
+place to curl (download) the tmp files for easy access 
+
+Default -> ZURLDIR=/tmp
+
+=item B<AURLINKS>
+
+alters between opening pkgbuilds or comments.  If you want comments, 
+this must be set to comments.
+
+Default -> AURLINKS=PKGBUILD
+
+=item B<BROWSER>
+
+This is the fallback to open links in if no other cases were tripped
+
+Default -> BROWSER=firefox
+
+=item B<GIFPLAYER>
+
+This will be the default program to open gifs in
+
+Default -> GIFPLAYER=mplayer
+
+=item B<GIFARGS>
+
+These are the arguments to be used with B<GIFPLAYER>
+
+Default -> GIFARGS="-loop 0 -speed 1"
+
+=item B<YOUTUBEPLAYER>
+
+This is the player to be used with youtube-viewer (if you have it)
+
+Default -> YOUTUBEPLAYER=mplayer
+
+=item B<YOUTUBEARGS>
+
+These are the args to be used with your YOUTUBEPLAYER for youtube-viewer
+
+Default -> YOUTUBEARGS="-loop 0 -speed 1"
+
+=item B<PASTEEDITOR>
+
+This is what you would like to open pastes in (default prefers gvim or vim compiled with server support)
+
+Default -> PASTEEDITOR=vim
+
+=item B<SERVERNAME>
+
+This is the name of the vim server
+
+Default -> SERVERNAME=PASTIE
+
+=item B<PASTEARGS>
+
+These are the args to be used with PASTEEDITOR (if you do not have vim compiled with server support you need to change this)
+
+Default -> PASTEARGS="--servername $SERVERNAME"
+
+=item B<OPENEDPASTEARGS>
+
+These are the args to use with PASTEEDITOR if you already have one paste open.  It allows for opening multiple pastes in the same vim server.
+
+Default -> OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
+
+=item B<MULTIPLEXER>
+
+This is where you set your multiplexer
+
+Default -> MULTIPLEXER=tmux
+
+=item B<MULTIARGS>
+
+This allows you to set the args to use with your multiplexer when opening pastes
+
+Default -> MULTIARGS="neww -n $SERVERNAME"
+
+=item B<PASTETERMINAL>
+
+If you don't have a multiplexer open, zurl will open pastes in a terminal
+
+Default -> PASTETERMINAL=termite
+
+=item B<PASTEEXEC>
+
+This is whatever flag your terminal uses to execute commands on launch
+
+Default -> PASTEEXEC="-e"
+
+=item B<IMAGEOPENER>
+
+This is what you want to open pictures in
+
+Default -> IMAGEOPENER=feh
+
+=item B<REMOVEFILE>
+
+1 if you don't want to remove file after they have been opened, 0 if you do
+
+Default -> REMOVEFILE=1
+
+=back
+
+=head1 AUTHOR
+
+Daniel Wallace E<lt>danielwallace@gtmanfred.comE<gt>

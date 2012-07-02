@@ -154,9 +154,9 @@ testopen(){
 }
 testmulti(){
     if (( $+commands[tmux] )) && [[ -n "${(Mf)$(tmux list-session 2>&/dev/null|grep attached)}" ]];then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
 
@@ -179,12 +179,12 @@ export ZURLDIR="${ZURLDIR:-/tmp}"
 export REMOVEFILE="${REMOVEFILE:-1}"
 export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
-[[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC=-e
-[[ -z "$GIFARGS" ]] && export GIFARGS=-loop 0 -speed 1
-[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS=-loop 0 -speed 1
-[[ -z "$PASTEARGS" ]] && export PASTEARGS=--servername PASTIE
-[[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS=$PASTEARGS --remote-tab-silent
-[[ -z "$MULTIARGS" ]] && export MULTIARGS=neww -n $SERVERNAME
+[[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
+[[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
+[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
+[[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
+[[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
+[[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
 if [[ ! -d "$ZURLDIR" ]]; then
     mkdir "$ZURLDIR";
     if [[ $? -ne 0 ]]; then
@@ -228,5 +228,5 @@ case "$filetypeis" in
         ;;
 esac
 
-#[[ $REMOVEFILE -eq 0 ]] && removefile 
+[[ $REMOVEFILE -eq 0 ]] && removefile 
 # vim: set filetype=zsh:
