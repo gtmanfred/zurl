@@ -115,6 +115,44 @@ This allows you to set the args to use with your multiplexer when opening pastes
 
 Default -> MULTIARGS="neww -n $SERVERNAME"
 
+=item B<testopen>
+
+this is a function to test if a paste is opened so the OPENPASTEARGS are used
+
+Default ->
+
+=over 4
+
+testopen(){
+    if [[ -n ${(Mf)$(vim --serverlist)#PASTIE} ]];then
+        return 1
+    else
+        return 0
+    fi
+
+}
+
+=back
+
+=item B<testmulti>
+
+this is a function to test if the multiplexer is opened/attached, if not use PASTETERMINAL
+
+Default ->
+
+=over 4
+
+testmulti(){
+    if (( $+commands[tmux] )) && [[ -n ${(Mf)$(tmux list-session 2>&/dev/null|grep attached)} ]];then
+        return 0
+    else
+        return 1
+    fi
+
+}
+
+=back
+
 =item B<PASTETERMINAL>
 
 If you don't have a multiplexer open, zurl will open pastes in a terminal
