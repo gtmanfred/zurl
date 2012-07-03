@@ -34,9 +34,9 @@ pastebin() {
         pastie.org)
             #url="${1%/*}/pastes/${1##*/}/download"
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
-                url="$1"/download
+                url="$1"
             else
-                url="${${${${${${(Mf)$(curl -Ls $1 |grep raw )}#*\"}%%\"*}//text/download}//\?/\\\?}//=/\\=}"
+                url="http://pastie.org""${${(f)"$(curl -sL $1 | grep download)"##*href\=\"}%%\"*}"
             fi
             ;;
         bpaste.net)
