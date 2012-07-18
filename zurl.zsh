@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 pastebin() {
-    case "${${1##*//}%%/*}" in
+    case "${${(SM)1#//*/}//\/}" in
         sprunge.us)
             url="${1%\?*}"
             ;;
@@ -20,7 +20,7 @@ pastebin() {
             url="$1"/plain/
             ;;
         pastebin.ca)
-            url=http://pastebin.ca"${${${(f)$(curl -Ls $1 |grep raw)}#*href=\"}%%\"*}"
+            url=http://pastebin.ca$(getlink $1 raw)
             ;;
         paste.dy.fi)
             url="${1%%\?*}"/plain
@@ -36,7 +36,8 @@ pastebin() {
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"
             else
-                url="http://pastie.org""${${(f)"$(curl -sL $1 | grep download)"##*href\=\"}%%\"*}"
+                followurl $1
+                url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text $URL)"}:#*download*}#*href=\"}%%\"*}
             fi
             ;;
         bpaste.net)
@@ -65,9 +66,9 @@ pastebin() {
                 url="$1" 
             else
                 if [[ "$AURLINKS" != "comments" ]];then 
-                    url="${(f)$( curl -Ls $1 |grep PKGBUILD)}"
-                    url="${${url##*href\=\'}%%\'*}"
-                    url=https://aur.archlinux.org/"$url" #"${${url##*=\'}%\'*}"
+                    DOUBLE=1
+                    url=$(getlink $1 PKGBUILD)
+                    url=https://aur.archlinux.org"$url" #"${${url##*=\'}%\'*}"
                 fi
             fi
             ;;
@@ -147,6 +148,96 @@ vr(){
         (( $+commands[$PASTEEDITOR] )) && $PASTEEDITOR "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" #|| "$BROWSER" "$2"
     fi
 }
+
+getlink(){
+    [[ ${1:0:5} == "https" ]] && tmp=${1/s} || tmp=$1
+    if [[ $DOUBLE -eq 1 ]]; then
+        print -l ${${${(M)${(f)"$(getpaste text $tmp)"}:#*$2*}##*href=[\'\"]}%%[\'\"]*}
+    else
+        print -l ${${${(M)${(f)"$(getpaste text $tmp)"}:#*$2*}#*href=[\'\"]}%%[\'\"]*}
+    fi
+    unset DOUBLE
+}
+
+followurl(){
+    local location=${${(M)${(f)"$(getpaste info $1)"}:#Location*}#Location: }
+    
+    if [[ -z $location ]]; then
+        URL=$1
+    elif [[ ${location:0:4} == "http" ]]; then
+        URL=$location
+    elif [[ $location[1] == "/" ]]; then
+        URL="${(M)1#*//#/}${location#/}"
+    fi
+    unset location
+    [[ $- == *i* ]] && print -l $URL && unset URL
+}
+
+testkeys(){
+    while [[ -n $@ ]]; do
+        case $1 in 
+            info)
+                info=1;;
+            text)
+                text=1;;
+            save)
+                savetext=1;;
+            image)
+                image=1;;
+            http*)
+                URL="$1";;
+            -p|--port)
+                shift
+                port=$1
+                ;;
+        esac
+        shift
+    done
+    export info text savetext URL port
+}
+getpicture(){
+    autoload -U tcp_open
+    URL=$1
+    TCP_PROMPT=""
+    TCP_SILENT=0
+    local domain=${${(SM)URL#//*/}//\/}
+    tcp_open -q $domain $port paste || return 2
+    tcp_send -s paste -- "GET ${URL} HTTP/1.1"
+    tcp_send -s paste -- "Host: $domain"
+    tcp_send -s paste -- "Accept-Charset: image"
+    tcp_send -s paste -- ""
+    tcp_read -d -b -s paste
+    tcp_close -q paste
+}
+getpaste(){
+    testkeys "$@"
+    local printtext htmlinfo
+    TCP_PROMPT=""
+    TCP_SILENT=0
+    printtext='${tcp_lines:#*}'
+    printimage='${${tcp_lines:#*}:#^[ \t]$}'
+    htmlinfo='${(M)${tcp_lines:#*}}'
+    local domain=${${(SM)URL#//*/}//\/}
+
+    [[ -z $port ]] && port=80
+    zmodload zsh/net/tcp
+    ztcp $domain $port
+    fd=$REPLY
+    link="${URL#*$domain}"
+    print -l -u $fd -- "GET $link HTTP/1.1"$'\015' "Host: $domain"$'\015' 'Connection: close'$'\015' $'\015'
+    tcp_lines=(${(f)"$(while IFS= read -u $fd -r -e; do; :; done)"})
+    ztcp -c $fd
+    [[ -n $info ]] && print -l ${(e)htmlinfo}
+    [[ -n $text ]] && print -l ${(e)printtext}
+    [[ -n $image ]] && print -l ${(e)printimage}
+    if [[ -n $savetext ]]; then
+        [[ -z $var ]] && local var=$RANDOM
+        [[ -z $ZURLDIR ]] && local ZURLDIR=/tmp
+        print -l ${(e)printtext} > "$ZURLDIR/$var"
+    fi
+    unset domain URL saveinfo info text port tcp_lines
+}
+
 removefile (){
     sleep 5
     [[ -f "${ZURLDIR%/}"/"$val" ]] && rm "${ZURLDIR%/}"/"$val"
@@ -167,6 +258,7 @@ testmulti(){
 }
 
 autoload -U regex-replace
+[[ $- == *i* ]] && return
 export val="$RANDOM"
 while [[ -f "${ZURLDIR%/}"/"$val" ]];do
     export val="$RANDOM"
