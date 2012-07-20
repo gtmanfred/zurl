@@ -82,10 +82,11 @@ pastebin() {
             dones=1;
             ;; 
         imgur.com)
-            imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
-            imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.jpg*}
-            [[ -z $imageurl ]] && imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.png*}
-            imageurl="${${imageurl##*ref\=\"}%%\"*}"
+            imageurl=(${(u)${${(SM)${(f)"$(zwget $1)"}#http*${1##*/}*\"}%%\"*}:#$1})
+            #imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
+            #imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.jpg*}
+            #[[ -z $imageurl ]] && imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.png*}
+            #imageurl="${${imageurl##*ref\=\"}%%\"*}"
             ;;
         www.youtube.com|youtu.be)
             videourl="$1";;
@@ -93,7 +94,8 @@ pastebin() {
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
-        (( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
+        #(( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
+        zwget $imageurl > $ZURLDIR/$val
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
@@ -108,7 +110,8 @@ pastebin() {
     fi
 }
 testomp(){
-    filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+    #filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+    filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
     filetype2="${filetype2%%;*}"
     filetypeis="${filetype2%/*}"
     case "$filetypeis" in 
@@ -117,13 +120,13 @@ testomp(){
         image)
             case "${filetype2#*/}" in
                 gif*)
-                    file=/tmp/"${${1##*/}%\.}"
-                    curl -Ls "$1" -o "$file"
+                    file=$ZURLDIR/$val
+                    zwget "$1" > $file
                     (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
-                    curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
+                    zwget $1 "${ZURLDIR%/}"/"$val"
                     (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
@@ -133,7 +136,8 @@ testomp(){
     esac
 }
 vr(){
-    curl -Ls -o "${ZURLDIR%/}"/"$val" "$2"
+    #curl -Ls -o "${ZURLDIR%/}"/"$val" "$2"
+    print -l ${${(f)"$(zwget "$2")"}%} > "${ZURLDIR%/}/$val"
     testopen
     if [[ "$?" -eq 0 ]];then
         testmulti 
@@ -193,20 +197,30 @@ testkeys(){
     done
     export info text savetext URL port
 }
-getpicture(){
-    autoload -U tcp_open
-    URL=$1
-    TCP_PROMPT=""
-    TCP_SILENT=0
-    local domain=${${(SM)URL#//*/}//\/}
-    tcp_open -q $domain $port paste || return 2
-    tcp_send -s paste -- "GET ${URL} HTTP/1.1"
-    tcp_send -s paste -- "Host: $domain"
-    tcp_send -s paste -- "Accept-Charset: image"
-    tcp_send -s paste -- ""
-    tcp_read -d -b -s paste
-    tcp_close -q paste
+
+zwget() {
+    emulate -LR zsh
+    local scheme empty server resource fd headerline
+    IFS=/ read scheme empty server resource <<<$1
+    case $scheme in
+    (https:) print -u2 SSL unsupported, falling back on HTTP ;&
+    (http:)
+        zmodload zsh/net/tcp
+        ztcp $server 80 && fd=$REPLY || return 1;;
+    (*) print -u2 $scheme unsupported; return 1;;
+    esac
+    print -l -u$fd -- \
+        "GET /$resource HTTP/1.0"$'\015' \
+        "Host: $server"$'\015' \
+        'Connection: close'$'\015' $'\015'
+    while IFS= read -u $fd -r headerline
+    do
+	[[ $headerline == $'\015' ]] && break
+    done
+    while IFS= read -u $fd -r -e; do :; done
+    ztcp -c $fd
 }
+
 getpaste(){
     testkeys "$@"
     local printtext htmlinfo
@@ -214,7 +228,7 @@ getpaste(){
     TCP_SILENT=0
     printtext='${tcp_lines:#*}'
     printimage='${${tcp_lines:#*}:#^[ \t]$}'
-    htmlinfo='${(M)${tcp_lines:#*}}'
+    htmlinfo='${(M)tcp_lines:#*}'
     local domain=${${(SM)URL#//*/}//\/}
 
     [[ -z $port ]] && port=80
@@ -291,8 +305,8 @@ fi
 
 
 
-head="$(curl -Ls -I $1)"
-filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+#filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
 echo $1
@@ -301,12 +315,14 @@ case "$filetypeis" in
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
-                curl -Ls "$1" -o "$file"
+                #curl -Ls "$1" -o "$file"
+                zwget $1 > $file
                 (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
-                curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
+                #curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
+                zwget $1 > $ZURLDIR/$val
                 (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
