@@ -19,20 +19,16 @@ pastebin() {
         dpaste.com)
             url="$1"/plain/
             ;;
-        pastebin.ca)
+        pastebin.ca|www.pastebin.ca)
             url=http://pastebin.ca$(getlink $1 raw)
             ;;
         paste.dy.fi)
             url="${1%%\?*}"/plain
             ;;
-        pastebin.ca|www.pastebin.ca)
-            url="${1%/*}"/raw/"${1##*/}"
-            ;;
         pastebin.org)
             url="${1%/*}"/pastebin.php\?dl\="${1##*/}"
             ;;
         pastie.org)
-            #url="${1%/*}/pastes/${1##*/}/download"
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"
             else
@@ -87,6 +83,8 @@ pastebin() {
             ;; 
         imgur.com)
             imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
+            imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.jpg*}
+            [[ -z $imageurl ]] && imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.png*}
             imageurl="${${imageurl##*ref\=\"}%%\"*}"
             ;;
         www.youtube.com|youtu.be)
@@ -95,7 +93,7 @@ pastebin() {
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
-        curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl"
+        (( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
