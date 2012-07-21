@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 pastebin() {
-    case "${${1##*//}%%/*}" in
+    case "${${(SM)1#//*/}//\/}" in
         sprunge.us)
             url="${1%\?*}"
             ;;
@@ -19,24 +19,21 @@ pastebin() {
         dpaste.com)
             url="$1"/plain/
             ;;
-        pastebin.ca)
-            url=http://pastebin.ca"${${${(f)$(curl -Ls $1 |grep raw)}#*href=\"}%%\"*}"
+        pastebin.ca|www.pastebin.ca)
+            url=http://pastebin.ca"$(getlink "$1" raw)"
             ;;
         paste.dy.fi)
             url="${1%%\?*}"/plain
-            ;;
-        pastebin.ca|www.pastebin.ca)
-            url="${1%/*}"/raw/"${1##*/}"
             ;;
         pastebin.org)
             url="${1%/*}"/pastebin.php\?dl\="${1##*/}"
             ;;
         pastie.org)
-            #url="${1%/*}/pastes/${1##*/}/download"
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"
             else
-                url="http://pastie.org""${${(f)"$(curl -sL $1 | grep download)"##*href\=\"}%%\"*}"
+                followurl "$1"
+                url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
             fi
             ;;
         bpaste.net)
@@ -65,9 +62,9 @@ pastebin() {
                 url="$1" 
             else
                 if [[ "$AURLINKS" != "comments" ]];then 
-                    url="${(f)$( curl -Ls $1 |grep PKGBUILD)}"
-                    url="${${url##*href\=\'}%%\'*}"
-                    url=https://aur.archlinux.org/"$url" #"${${url##*=\'}%\'*}"
+                    DOUBLE=1
+                    url=$(getlink "$1" PKGBUILD)
+                    url=https://aur.archlinux.org"$url" #"${${url##*=\'}%\'*}"
                 fi
             fi
             ;;
@@ -85,8 +82,7 @@ pastebin() {
             dones=1;
             ;; 
         imgur.com)
-            imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
-            imageurl="${${imageurl##*ref\=\"}%%\"*}"
+            imageurl=(${(u)${${(SM)${(f)"$(zcurl "$1")"}#http*${1##*/}*\"}%%\"*}:#$1})
             ;;
         www.youtube.com|youtu.be)
             videourl="$1";;
@@ -94,8 +90,8 @@ pastebin() {
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
-        curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl"
-        (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
+        zcurl $imageurl > $ZURLDIR/$val
+        (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
             "$YOUTUBE" "$1"
@@ -109,7 +105,7 @@ pastebin() {
     fi
 }
 testomp(){
-    filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+    filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
     filetype2="${filetype2%%;*}"
     filetypeis="${filetype2%/*}"
     case "$filetypeis" in 
@@ -118,14 +114,14 @@ testomp(){
         image)
             case "${filetype2#*/}" in
                 gif*)
-                    file=/tmp/"${${1##*/}%\.}"
-                    curl -Ls "$1" -o "$file"
+                    file="${ZURLDIR%/}/$val"
+                    zcurl "$1" > "$file"
                     (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
-                    curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
-                    (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                    zcurl "$1" "${ZURLDIR%/}"/"$val"
+                    (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
             ;;
@@ -134,7 +130,7 @@ testomp(){
     esac
 }
 vr(){
-    curl -Ls -o "${ZURLDIR%/}"/"$val" "$2"
+    print -l ${${(f)"$(zcurl "$2")"}%} > "${ZURLDIR%/}/$val"
     testopen
     if [[ "$?" -eq 0 ]];then
         testmulti 
@@ -147,6 +143,107 @@ vr(){
         (( $+commands[$PASTEEDITOR] )) && $PASTEEDITOR "${=OPENEDPASTEARGS[@]}" "${ZURLDIR%/}"/"$val" #|| "$BROWSER" "$2"
     fi
 }
+
+getlink(){
+    [[ "${1:0:5}" == "https" ]] && tmp="${1/s}" || tmp="$1"
+    if [[ "$DOUBLE" -eq 1 ]]; then
+        print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}##*href=[\'\"]}%%[\'\"]*}
+    else
+        print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}#*href=[\'\"]}%%[\'\"]*}
+    fi
+    unset DOUBLE
+}
+
+followurl(){
+    local location=${${(M)${(f)"$(getpaste info "$1")"}:#Location*}#Location: }
+    
+    if [[ -z "$location" ]]; then
+        URL="$1"
+    elif [[ "${location:0:4}" == "http" ]]; then
+        URL="$location"
+    elif [[ "$location[1]" == "/" ]]; then
+        URL="${(M)1#*//#/}${location#/}"
+    fi
+    unset location
+    [[ "$-" == *i* ]] && print -l "$URL" && unset URL
+}
+
+testkeys(){
+    while [[ -n "$@" ]]; do
+        case "$1" in 
+            info)
+                info=1;;
+            text)
+                text=1;;
+            save)
+                savetext=1;;
+            image)
+                image=1;;
+            http*)
+                URL="$1";;
+            -p|--port)
+                shift
+                port="$1"
+                ;;
+        esac
+        shift
+    done
+    export info text savetext URL port
+}
+
+# http://www.zsh.org/mla/users/2011/msg00734.html
+zcurl() {
+    emulate -LR zsh
+    local scheme empty server resource fd headerline
+    IFS=/ read scheme empty server resource <<<$1
+    case $scheme in
+    (https:) print -u2 SSL unsupported, falling back on HTTP ;&
+    (http:)
+        zmodload zsh/net/tcp
+        ztcp $server 80 && fd=$REPLY || return 1;;
+    (*) print -u2 $scheme unsupported; return 1;;
+    esac
+    print -l -u$fd -- \
+        "GET /$resource HTTP/1.0"$'\015' \
+        "Host: $server"$'\015' \
+        'Connection: close'$'\015' $'\015'
+    while IFS= read -u $fd -r headerline
+    do
+	[[ $headerline == $'\015' ]] && break
+    done
+    while IFS= read -u $fd -r -e; do :; done
+    ztcp -c $fd
+}
+
+getpaste(){
+    testkeys "$@"
+    local printtext htmlinfo
+    TCP_PROMPT=""
+    TCP_SILENT=0
+    printtext='${tcp_lines:#*}'
+    printimage='${${tcp_lines:#*}:#^[ \t]$}'
+    htmlinfo='${(M)tcp_lines:#*}'
+    local domain=${${(SM)URL#//*/}//\/}
+
+    [[ -z "$port" ]] && port=80
+    zmodload zsh/net/tcp
+    ztcp "$domain" "$port"
+    fd=$REPLY
+    link="${URL#*$domain}"
+    print -l -u $fd -- "GET $link HTTP/1.1"$'\015' "Host: $domain"$'\015' 'Connection: close'$'\015' $'\015'
+    tcp_lines=(${(f)"$(while IFS= read -u $fd -r -e; do; :; done)"})
+    ztcp -c $fd
+    [[ -n $info ]] && print -l ${(e)htmlinfo}
+    [[ -n $text ]] && print -l ${(e)printtext}
+    [[ -n $image ]] && print -l ${(e)printimage}
+    if [[ -n $savetext ]]; then
+        [[ -z $var ]] && local var=$RANDOM
+        [[ -z $ZURLDIR ]] && local ZURLDIR=/tmp
+        print -l ${(e)printtext} > "$ZURLDIR/$var"
+    fi
+    unset domain URL saveinfo info text port tcp_lines
+}
+
 removefile (){
     sleep 5
     [[ -f "${ZURLDIR%/}"/"$val" ]] && rm "${ZURLDIR%/}"/"$val"
@@ -167,6 +264,7 @@ testmulti(){
 }
 
 autoload -U regex-replace
+[[ "$-" == *i* ]] && return
 export val="$RANDOM"
 while [[ -f "${ZURLDIR%/}"/"$val" ]];do
     export val="$RANDOM"
@@ -187,6 +285,7 @@ export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
 [[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
+[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh"]] && export IMAGEARGS='--scale-down'
 [[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
@@ -201,22 +300,21 @@ fi
 
 
 
-head="$(curl -Ls -I $1)"
-filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
+filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
-echo $1
 case "$filetypeis" in 
     image)
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
-                curl -Ls "$1" -o "$file"
+                zcurl "$1" > "$file"
                 (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
-                curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
+                zcurl "$1" > "${ZURLDIR%/}/$val"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
