@@ -54,6 +54,12 @@ pastebin() {
         paste.xinu.at)
             url=${1%/}
             ;;
+        pae.st)
+            if [[ -n ${(SM)1:#raw} ]]; then
+                url="$1"
+            else
+                url="${1%/}/raw/"
+            fi;;
         aur.archlinux.org)
             if [[ "${1##*/}" == "PKGBUILD" ]];then
                 url="$1" 
