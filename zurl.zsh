@@ -315,7 +315,6 @@ case "$filetypeis" in
             *)
                 zcurl "$1" > "${ZURLDIR%/}/$val"
                 (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
-                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
         ;;
