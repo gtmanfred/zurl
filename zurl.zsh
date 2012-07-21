@@ -285,7 +285,7 @@ export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
 [[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
-[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh"]] && export IMAGEARGS='--scale-down'
+[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh" ]] && export IMAGEARGS="--scale-down"
 [[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
