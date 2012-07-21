@@ -20,7 +20,7 @@ pastebin() {
             url="$1"/plain/
             ;;
         pastebin.ca|www.pastebin.ca)
-            url=http://pastebin.ca$(getlink $1 raw)
+            url=http://pastebin.ca"$(getlink "$1" raw)"
             ;;
         paste.dy.fi)
             url="${1%%\?*}"/plain
@@ -32,8 +32,8 @@ pastebin() {
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"
             else
-                followurl $1
-                url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text $URL)"}:#*download*}#*href=\"}%%\"*}
+                followurl "$1"
+                url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
             fi
             ;;
         bpaste.net)
@@ -63,7 +63,7 @@ pastebin() {
             else
                 if [[ "$AURLINKS" != "comments" ]];then 
                     DOUBLE=1
-                    url=$(getlink $1 PKGBUILD)
+                    url=$(getlink "$1" PKGBUILD)
                     url=https://aur.archlinux.org"$url" #"${${url##*=\'}%\'*}"
                 fi
             fi
@@ -82,7 +82,7 @@ pastebin() {
             dones=1;
             ;; 
         imgur.com)
-            imageurl=(${(u)${${(SM)${(f)"$(zwget $1)"}#http*${1##*/}*\"}%%\"*}:#$1})
+            imageurl=(${(u)${${(SM)${(f)"$(zwget "$1")"}#http*${1##*/}*\"}%%\"*}:#$1})
             #imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
             #imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.jpg*}
             #[[ -z $imageurl ]] && imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.png*}
@@ -95,7 +95,7 @@ pastebin() {
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
         #(( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
-        zwget $imageurl > $ZURLDIR/$val
+        zwget "$imageurl" > "${ZURLDIR%/}/$val"
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
@@ -120,13 +120,13 @@ testomp(){
         image)
             case "${filetype2#*/}" in
                 gif*)
-                    file=$ZURLDIR/$val
-                    zwget "$1" > $file
+                    file="${ZURLDIR%/}/$val"
+                    zwget "$1" > "$file"
                     (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                     rm "$file"
                         ;;
                 *)
-                    zwget $1 "${ZURLDIR%/}"/"$val"
+                    zwget "$1" "${ZURLDIR%/}"/"$val"
                     (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
@@ -152,32 +152,32 @@ vr(){
 }
 
 getlink(){
-    [[ ${1:0:5} == "https" ]] && tmp=${1/s} || tmp=$1
-    if [[ $DOUBLE -eq 1 ]]; then
-        print -l ${${${(M)${(f)"$(getpaste text $tmp)"}:#*$2*}##*href=[\'\"]}%%[\'\"]*}
+    [[ "${1:0:5}" == "https" ]] && tmp="${1/s}" || tmp="$1"
+    if [[ "$DOUBLE" -eq 1 ]]; then
+        print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}##*href=[\'\"]}%%[\'\"]*}
     else
-        print -l ${${${(M)${(f)"$(getpaste text $tmp)"}:#*$2*}#*href=[\'\"]}%%[\'\"]*}
+        print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}#*href=[\'\"]}%%[\'\"]*}
     fi
     unset DOUBLE
 }
 
 followurl(){
-    local location=${${(M)${(f)"$(getpaste info $1)"}:#Location*}#Location: }
+    local location=${${(M)${(f)"$(getpaste info "$1")"}:#Location*}#Location: }
     
-    if [[ -z $location ]]; then
-        URL=$1
-    elif [[ ${location:0:4} == "http" ]]; then
-        URL=$location
-    elif [[ $location[1] == "/" ]]; then
+    if [[ -z "$location" ]]; then
+        URL="$1"
+    elif [[ "${location:0:4}" == "http" ]]; then
+        URL="$location"
+    elif [[ "$location[1]" == "/" ]]; then
         URL="${(M)1#*//#/}${location#/}"
     fi
     unset location
-    [[ $- == *i* ]] && print -l $URL && unset URL
+    [[ "$-" == *i* ]] && print -l "$URL" && unset URL
 }
 
 testkeys(){
-    while [[ -n $@ ]]; do
-        case $1 in 
+    while [[ -n "$@" ]]; do
+        case "$1" in 
             info)
                 info=1;;
             text)
@@ -190,7 +190,7 @@ testkeys(){
                 URL="$1";;
             -p|--port)
                 shift
-                port=$1
+                port="$1"
                 ;;
         esac
         shift
@@ -231,9 +231,9 @@ getpaste(){
     htmlinfo='${(M)tcp_lines:#*}'
     local domain=${${(SM)URL#//*/}//\/}
 
-    [[ -z $port ]] && port=80
+    [[ -z "$port" ]] && port=80
     zmodload zsh/net/tcp
-    ztcp $domain $port
+    ztcp "$domain" "$port"
     fd=$REPLY
     link="${URL#*$domain}"
     print -l -u $fd -- "GET $link HTTP/1.1"$'\015' "Host: $domain"$'\015' 'Connection: close'$'\015' $'\015'
@@ -270,7 +270,7 @@ testmulti(){
 }
 
 autoload -U regex-replace
-[[ $- == *i* ]] && return
+[[ "$-" == *i* ]] && return
 export val="$RANDOM"
 while [[ -f "${ZURLDIR%/}"/"$val" ]];do
     export val="$RANDOM"
@@ -309,20 +309,19 @@ fi
 filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
-echo $1
 case "$filetypeis" in 
     image)
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
                 #curl -Ls "$1" -o "$file"
-                zwget $1 > $file
+                zwget "$1" > "$file"
                 (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
                 #curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
-                zwget $1 > $ZURLDIR/$val
+                zwget "$1" > "${ZURLDIR%/}/$val"
                 (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
