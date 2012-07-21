@@ -83,10 +83,6 @@ pastebin() {
             ;; 
         imgur.com)
             imageurl=(${(u)${${(SM)${(f)"$(zwget "$1")"}#http*${1##*/}*\"}%%\"*}:#$1})
-            #imageurl="$(curl -Ls $1 |grep -Ei ".jpg|.png"|grep -Ei "a href"|head -n1)"
-            #imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.jpg*}
-            #[[ -z $imageurl ]] && imageurl=${(M)${(f)"$(getpaste text $1)"}:#*\.png*}
-            #imageurl="${${imageurl##*ref\=\"}%%\"*}"
             ;;
         www.youtube.com|youtu.be)
             videourl="$1";;
@@ -94,7 +90,6 @@ pastebin() {
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
-        #(( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
         zwget "$imageurl" > "${ZURLDIR%/}/$val"
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
@@ -110,7 +105,6 @@ pastebin() {
     fi
 }
 testomp(){
-    #filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
     filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
     filetype2="${filetype2%%;*}"
     filetypeis="${filetype2%/*}"
@@ -136,7 +130,6 @@ testomp(){
     esac
 }
 vr(){
-    #curl -Ls -o "${ZURLDIR%/}"/"$val" "$2"
     print -l ${${(f)"$(zwget "$2")"}%} > "${ZURLDIR%/}/$val"
     testopen
     if [[ "$?" -eq 0 ]];then
@@ -198,6 +191,7 @@ testkeys(){
     export info text savetext URL port
 }
 
+# http://www.zsh.org/mla/users/2011/msg00734.html
 zwget() {
     emulate -LR zsh
     local scheme empty server resource fd headerline
@@ -305,7 +299,6 @@ fi
 
 
 
-#filetype2="$(curl -Ls -I $1 |grep \^Content-Type|sed -e 'sT.*:\ \(.*/.*\);\?\ \?.*T\1Tg' )"
 filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
 filetype2="${filetype2%%;*}"
 filetypeis="${filetype2%/*}"
@@ -314,13 +307,11 @@ case "$filetypeis" in
         case "${filetype2#*/}" in
             gif*)
                 file="${ZURLDIR%/}"/"$val"
-                #curl -Ls "$1" -o "$file"
                 zwget "$1" > "$file"
                 (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
                 rm "$file"
                     ;;
             *)
-                #curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
                 zwget "$1" > "${ZURLDIR%/}/$val"
                 (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
