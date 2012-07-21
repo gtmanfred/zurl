@@ -90,7 +90,7 @@ pastebin() {
     elif [[ -n "$imageurl" ]];then
         #(( $commands[curl] )) && curl -Ls -o "${ZURLDIR%/}"/"$val" "$imageurl" || ($BROWSER $imageurl && return)
         zwget $imageurl > $ZURLDIR/$val
-        (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
+        (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
             "$YOUTUBE" "$1"
@@ -121,7 +121,7 @@ testomp(){
                         ;;
                 *)
                     zwget $1 "${ZURLDIR%/}"/"$val"
-                    (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                    (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                     ;;
             esac
             ;;
@@ -285,6 +285,7 @@ export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
 [[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
+[[ -z "$IMAGEARGS" ]] && export IMAGEARGS='--scale-down'
 [[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
@@ -317,7 +318,7 @@ case "$filetypeis" in
             *)
                 #curl -Ls -o "${ZURLDIR%/}"/"$val" "$1"
                 zwget $1 > $ZURLDIR/$val
-                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
         ;;
