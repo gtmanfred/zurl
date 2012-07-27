@@ -6,6 +6,7 @@ pastebin() {
             ;;
         raw.github.com|gist.github.com)
             [[ "${${1##*//}%%\.*}" == "gist" ]] && url=https://raw.github.com/gist/"${1##*/}" || url="$1"
+            https=1
             ;;
         pastebin.com)
             [[ "${${1##*com/}%\.php*}" == "raw" ]] && url="$1" || url=http://pastebin.com/raw.php\?i\="${1##*/}"
@@ -130,7 +131,15 @@ testomp(){
     esac
 }
 vr(){
-    print -l ${${(f)"$(zcurl "$2")"}%} > "${ZURLDIR%/}/$val"
+    if (( https )); then
+        if (( $+commands[curl] )); then
+            curl -sL "$2" -o "${ZURLDIR%/}/$val"
+        else
+            print "You need curl for this site because of SSL in https"
+        fi
+    else
+        print -l ${${(f)"$(zcurl "$2")"}%} > "${ZURLDIR%/}/$val"
+    fi
     testopen
     if [[ "$?" -eq 0 ]];then
         testmulti 
