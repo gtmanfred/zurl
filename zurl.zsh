@@ -57,7 +57,10 @@ pastebin() {
             url="${1%/*}"/raw/"${1##*/}"
             ;;
         paste.xinu.at)
-            url=${1%/}
+            url="${1%/*}"
+            ;;
+        pastr.it)
+            url="http://pastr.it/pastes/view/${1##*/}/pastr_${1##*/}.txt"
             ;;
         pae.st)
             if [[ -n ${(SM)1:#raw} ]]; then
