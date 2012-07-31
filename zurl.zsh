@@ -1,6 +1,13 @@
 #!/usr/bin/env zsh
 pastebin() {
     case "${${(SM)1#//*/}//\/}" in
+        ix.io)
+            if [[ "${${1#*//}%/*}" == "ix.io" ]]; then
+                url="$1"
+            else
+                url="${1%/*}"
+            fi
+            ;;
         sprunge.us)
             url="${1%\?*}"
             ;;
@@ -88,6 +95,7 @@ pastebin() {
         www.youtube.com|youtu.be)
             videourl="$1";;
     esac
+    echo $videourl
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
