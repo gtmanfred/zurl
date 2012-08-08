@@ -100,7 +100,6 @@ pastebin() {
         www.youtube.com|youtu.be)
             videourl="$1";;
     esac
-    echo $videourl
     if [[ -n "$url" ]];then
         vr PASTIE "$url"
     elif [[ -n "$imageurl" ]];then
@@ -267,23 +266,10 @@ getpaste(){
 }
 
 removefile (){
-    sleep 5
+    sleep 5 
     [[ -f "${ZURLDIR%/}"/"$val" ]] && rm "${ZURLDIR%/}"/"$val"
 }
-testopen(){
-    if [[ -n "${(Mf)$(vim --serverlist)#PASTIE}" ]];then
-        return 1
-    else
-        return 0
-    fi
-}
-testmulti(){
-    if (( $+commands[tmux] )) && [[ -n "${(Mf)$(tmux list-session 2>&/dev/null|grep attached)}" ]];then
-        return 0
-    else
-        return 1
-    fi
-}
+
 
 autoload -U regex-replace
 [[ "$-" == *i* ]] && return
@@ -319,11 +305,26 @@ if [[ ! -d "$ZURLDIR" ]]; then
         exit 1;
     fi
 fi
+if (( ! $+functions[testopen] )); then
+    testopen(){
+        if [[ -n "${(Mf)$(vim --serverlist)#PASTIE}" ]];then
+            return 1
+        else
+            return 0
+        fi
+    }
+fi
+if (( ! $+functions[testmulti] )); then
+    testmulti(){
+        if (( $+commands[tmux] )) && [[ -n "${(Mf)$(tmux list-session 2>&/dev/null|grep attached)}" ]];then
+            return 0
+        else
+            return 1
+        fi
+    }
+fi
 
-
-
-filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
-filetype2="${filetype2%%;*}"
+filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}#Content-Type: *;}##C* }%;})
 filetypeis="${filetype2%/*}"
 case "$filetypeis" in 
     image)
@@ -332,7 +333,6 @@ case "$filetypeis" in
                 file="${ZURLDIR%/}"/"$val"
                 zcurl "$1" > "$file"
                 (( $+commands[$GIFPLAYER] )) && "$GIFPLAYER" "${=GIFARGS[@]}" "$file" || "$BROWSER" "$1"
-                rm "$file"
                     ;;
             *)
                 zcurl "$1" > "${ZURLDIR%/}/$val"
@@ -353,5 +353,5 @@ case "$filetypeis" in
         ;;
 esac
 
-[[ $REMOVEFILE -eq 0 ]] && removefile 
+(( REMOVEFILE )) && removefile &
 # vim: set filetype=zsh:
