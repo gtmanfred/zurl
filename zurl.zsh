@@ -39,6 +39,8 @@ pastebin() {
         pastie.org)
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
                 url="$1"
+            elif [[ -n ${(M)1:#*private*} ]]; then
+                url=${${(M)1#*//*/}%/}${${(SM)${(f)"$(zcurl "$1")"}#\"*download*\"}//\"}
             else
                 followurl "$1"
                 url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
