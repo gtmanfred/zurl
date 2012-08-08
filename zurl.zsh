@@ -114,7 +114,7 @@ pastebin() {
         else
             "$BROWSER" "$1"
         fi
-    elif [[ "$dones" -ne 1 ]]; then
+    elif (( ! dones)) ; then
         "$BROWSER" "$1"
     fi
 }
@@ -154,9 +154,9 @@ vr(){
         print -l ${${(f)"$(zcurl "$2")"}%} > "${ZURLDIR%/}/$val"
     fi
     testopen
-    if [[ "$?" -eq 0 ]];then
+    if (( ! ? ));then
         testmulti 
-        if [[ "$?" -eq 0 ]]; then
+        if (( ! ? )); then
             "$MULTIPLEXER" "${=MULTIARGS[@]}" "$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val"
         else
             (( $+commands[$PASTETERMINAL] )) && "$PASTETERMINAL" "${=PASTEEXEC[@]}" "zsh -c \"$PASTEEDITOR ${PASTEARGS[@]} ${ZURLDIR%/}/$val\"" || "$BROWSER" "$2"
@@ -168,7 +168,7 @@ vr(){
 
 getlink(){
     [[ "${1:0:5}" == "https" ]] && tmp="${1/s}" || tmp="$1"
-    if [[ "$DOUBLE" -eq 1 ]]; then
+    if (( DOUBLE )); then
         print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}##*href=[\'\"]}%%[\'\"]*}
     else
         print -l ${${${(M)${(f)"$(getpaste text "$tmp")"}:#*$2*}#*href=[\'\"]}%%[\'\"]*}
@@ -247,7 +247,7 @@ getpaste(){
     htmlinfo='${(M)tcp_lines:#*}'
     local domain=${${(SM)URL#//*/}//\/}
 
-    [[ -z "$port" ]] && port=80
+    (( ! port )) && port=80
     zmodload zsh/net/tcp
     ztcp "$domain" "$port"
     fd=$REPLY
@@ -255,10 +255,10 @@ getpaste(){
     print -l -u $fd -- "GET $link HTTP/1.1"$'\015' "Host: $domain"$'\015' 'Connection: close'$'\015' $'\015'
     tcp_lines=(${(f)"$(while IFS= read -u $fd -r -e; do; :; done)"})
     ztcp -c $fd
-    [[ -n $info ]] && print -l ${(e)htmlinfo}
-    [[ -n $text ]] && print -l ${(e)printtext}
-    [[ -n $image ]] && print -l ${(e)printimage}
-    if [[ -n $savetext ]]; then
+    (( info )) && print -l ${(e)htmlinfo}
+    (( text )) && print -l ${(e)printtext}
+    (( image )) && print -l ${(e)printimage}
+    if (( save )); then
         [[ -z $var ]] && local var=$RANDOM
         [[ -z $ZURLDIR ]] && local ZURLDIR=/tmp
         print -l ${(e)printtext} > "$ZURLDIR/$var"
@@ -314,7 +314,7 @@ export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
 if [[ ! -d "$ZURLDIR" ]]; then
     mkdir "$ZURLDIR";
-    if [[ $? -ne 0 ]]; then
+    if (( ? )); then
         print "$ZURLDIR does not exist"
         exit 1;
     fi
