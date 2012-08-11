@@ -178,7 +178,7 @@ getlink(){
 followurl(){
     local location=${${(M)${(f)"$(getpaste info "$1")"}:#Location*}#Location: }
     
-    if [[ -z "$location" ]]; then
+    if (( ! $+location )); then
         URL="$1"
     elif [[ "${location:0:4}" == "http" ]]; then
         URL="$location"
@@ -258,8 +258,8 @@ getpaste(){
     (( text )) && print -l ${(e)printtext}
     (( image )) && print -l ${(e)printimage}
     if (( save )); then
-        [[ -z $var ]] && local var=$RANDOM
-        [[ -z $ZURLDIR ]] && local ZURLDIR=/tmp
+        (( ! $+var )) && local var=$RANDOM
+        (( $+ZURLDIR )) && local ZURLDIR=/tmp
         print -l ${(e)printtext} > "$ZURLDIR/$var"
     fi
     unset domain URL saveinfo info text port tcp_lines
