@@ -42,8 +42,7 @@ pastebin() {
             elif [[ -n ${(M)1:#*private*} ]]; then
                 url=${${(M)1#*//*/}%/}${${(SM)${(f)"$(zcurl "$1")"}#\"*download*\"}//\"}
             else
-                followurl "$1"
-                url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
+                url=${${(M)1#*//*/}%/}${${(M)${(f)"$(zcurl "$1")"}#*download}##*\"}
             fi
             echo $url
             ;;
