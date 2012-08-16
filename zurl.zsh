@@ -45,6 +45,7 @@ pastebin() {
                 followurl "$1"
                 url=${${(M)1#*//*/}%/}${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
             fi
+            echo $url
             ;;
         bpaste.net)
             url="${1%/sh*}"/raw/"${1#*ow/}"
@@ -118,8 +119,7 @@ pastebin() {
     fi
 }
 testomp(){
-    filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}:#Content-Type*}#Content-Type: }%%;*})
-    filetype2="${filetype2%%;*}"
+    filetype2=${${${(SM)${(f)"$(getpaste info "$1")"}:#Content-Type: *}#C* }%%;*}
     filetypeis="${filetype2%/*}"
     case "$filetypeis" in 
         text)
@@ -324,7 +324,7 @@ if (( ! $+functions[testmulti] )); then
     }
 fi
 
-filetype2=(${${${(M)${(f)"$(getpaste info "$1")"}#Content-Type: *;}##C* }%;})
+filetype2=${${${(SM)${(f)"$(getpaste info "$1")"}:#Content-Type: *}#C* }%%;*}
 filetypeis="${filetype2%/*}"
 case "$filetypeis" in 
     image)
