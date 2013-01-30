@@ -38,13 +38,15 @@ pastebin() {
             ;;
         pastie.org)
             if [[ "${${1##*org/}%%/*}" == "pastes" ]];then
-                url="$1"
+                url="$1/download"
             elif [[ -n ${(M)1:#*private*} ]]; then
                 url=${${(M)1#*//*/}%/}${${(SM)${(f)"$(zcurl "$1")"}#\"*download*\"}//\"}
             else
                 url=${${(M)1#*//*/}%/}${${(M)${(f)"$(zcurl "$1")"}#*download}##*\"}
+                #followurl "$1"
+                #url=http://pastie.org${${${(M)${(f)"$(getpaste text "$URL")"}:#*download*}#*href=\"}%%\"*}
             fi
-            echo $url
+            url=${url//text/download}
             ;;
         bpaste.net)
             url="${1%/sh*}"/raw/"${1#*ow/}"
