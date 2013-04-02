@@ -109,7 +109,7 @@ pastebin() {
         (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$imageurl"
     elif [[ -n "$videourl" ]];then
         if [[ -n "$YOUTUBE" ]]; then
-            "$YOUTUBE" "$1"
+            "$YOUTUBE" "${=YOUTUBEARGS[@]}" "$1"
         elif (( $+commands[youtube-viewer] )); then
             youtube-viewer -mplayer="$YOUTUBEPLAYER" -mplayer_arguments="$YOUTUBEARGS" "$1"
         else
