@@ -280,7 +280,7 @@ while [[ -f "${ZURLDIR%/}"/"$val" ]];do
 done
 [[ -f /etc/zurlrc ]] && . /etc/zurlrc
 [[ -f ~/.zurlrc ]] && . ~/.zurlrc
-[[ -f "$XDG_CONFIG_HOME"/zurl/config ]] && . "$XDG_CONFIG_HOME"/zurl/config
+[[ -f "${XDG_CONFIG_HOME:-$HOME/.config}"/zurl/config ]] && . "${XDG_CONFIG_HOME:-$HOME/.config}"/zurl/config
 export AURLINKS="${AURLINKS:-PKGBUILD}"
 export BROWSER="${BROWSER:-firefox}"
 export GIFPLAYER="${GIFPLAYER:-mplayer}"
